@@ -3,9 +3,7 @@ import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
-    // Check if Stripe key exists
     if (!process.env.STRIPE_SECRET_KEY) {
-      console.error('STRIPE_SECRET_KEY not found');
       return Response.json({ error: "Configuration error" }, { status: 500 });
     }
 
@@ -17,6 +15,17 @@ export async function POST(req: NextRequest) {
       mode: "payment",
       success_url: `https://traffik-website-lj5y.vercel.app/?checkout=success`,
       cancel_url: `https://traffik-website-lj5y.vercel.app/?checkout=cancelled`,
+      
+      // Collect the website URL for the audit
+      custom_fields: [
+        {
+          key: "website_url",
+          label: { type: "custom", custom: "Website URL to audit" },
+          type: "text",
+          optional: false,
+        },
+      ],
+      
       line_items: [
         {
           price_data: {
@@ -35,10 +44,6 @@ export async function POST(req: NextRequest) {
     return Response.json({ url: session.url });
   } catch (error) {
     console.error('Stripe error:', error);
-    return Response.json(
-      { error: "Error creating checkout session" }, 
-      { status: 500 }
-    );
+    return Response.json({ error: "Error creating checkout session" }, { status: 500 });
   }
 }
-
