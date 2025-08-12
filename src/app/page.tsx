@@ -181,7 +181,7 @@ export default function TraffikLanding() {
             <p className="mt-3 text-xs text-white/60">Delivered in 48 hours. Full refund if we don&apos;t find 3+ high‑impact fixes.</p>
             </div>
             <div className="rounded-2xl border border-white/10 p-6">
-              <h3 className="mb-4 text-lg font-semibold">What you'll receive</h3>
+              <h3 className="mb-4 text-lg font-semibold">What you&apos;ll receive</h3>
               <div className="space-y-3 text-sm text-white/80">
                 <div className="rounded-xl bg-white/5 p-4">PDF executive summary + interactive dashboard</div>
                 <div className="rounded-xl bg-white/5 p-4">actionable recommendations</div>
