@@ -1,21 +1,31 @@
 import { headers } from "next/headers";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-07-30.basil",
-});
-
 export async function POST(req: Request) {
+  // Check if Stripe key exists
+  if (!process.env.STRIPE_SECRET_KEY) {
+    console.error('STRIPE_SECRET_KEY not found');
+    return new Response('Configuration error', { status: 500 });
+  }
+
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2025-07-30.basil",
+  });
+
   const body = await req.text();
   const signature = (await headers()).get("stripe-signature");
 
   let event: Stripe.Event;
 
   try {
+    if (!process.env.STRIPE_WEBHOOK_SECRET || !signature) {
+      throw new Error('Missing webhook secret or signature');
+    }
+
     event = stripe.webhooks.constructEvent(
       body,
-      signature!,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET
     );
   } catch (error) {
     console.error('Webhook signature verification failed:', error);
@@ -51,4 +61,3 @@ export async function POST(req: Request) {
 
   return new Response("ok", { status: 200 });
 }
-
