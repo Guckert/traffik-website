@@ -178,7 +178,7 @@ export default function TraffikLanding() {
                 <CheckoutButton label="Buy Audit — $159" />
                 <Ghost href="#faq">See FAQ</Ghost>
               </div>
-              <p className="mt-3 text-xs text-white/60">Delivered in 48 hours. Full refund if we don't find 3+ high‑impact fixes.</p>
+            <p className="mt-3 text-xs text-white/60">Delivered in 48 hours. Full refund if we don&apos;t find 3+ high‑impact fixes.</p>
             </div>
             <div className="rounded-2xl border border-white/10 p-6">
               <h3 className="mb-4 text-lg font-semibold">What you'll receive</h3>
