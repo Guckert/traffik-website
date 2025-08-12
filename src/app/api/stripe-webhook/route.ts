@@ -18,8 +18,8 @@ export async function POST(req: Request) {
       signature!,
       process.env.STRIPE_WEBHOOK_SECRET!
     );
-  } catch (err: any) {
-    console.error(`❌ Webhook signature verification failed:`, err.message);
+  } catch (err: unknown) {
+    console.error(`❌ Webhook signature verification failed:`, (err as Error).message);
     return new Response(`Webhook Error: ${err.message}`, { status: 400 });
   }
 
@@ -97,4 +97,5 @@ export async function POST(req: Request) {
 
   // Always return 200 to Stripe to acknowledge receipt
   return new Response("ok", { status: 200 });
+
 }
