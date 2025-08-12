@@ -5,7 +5,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_dummy", {
   apiVersion: "2024-06-20",
 });
 
-export async function POST(req: NextRequest) {
+export async function POST(_req: NextRequest) {
   try {
     console.log("Creating Stripe checkout session...");
     
@@ -36,4 +36,5 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+
 }
