@@ -2,7 +2,7 @@ import Stripe from "stripe";
 import { NextRequest } from "next/server";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_dummy", {
-  apiVersion: "2024-12-18.acacia",
+  apiVersion: "2025-07-30.basil",
 });
 
 export async function POST(req: NextRequest) {
@@ -35,3 +35,4 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
