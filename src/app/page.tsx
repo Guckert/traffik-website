@@ -287,7 +287,7 @@ export default function TraffikLanding() {
         <div className="mx-auto max-w-6xl px-4">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
             <div>
-              <h3 className="mb-2 text-xl font-semibold">Let's build your growth engine</h3>
+              <h3 className="mb-2 text-xl font-semibold">Let&apos;s build your growth engine</h3>
               <p className="mb-4 text-white/70">Email <a href="mailto:hello@traffik.nz" className="underline">hello@traffik.nz</a> or use the button below.</p>
               <div className="flex gap-3">
                 <CheckoutButton />
