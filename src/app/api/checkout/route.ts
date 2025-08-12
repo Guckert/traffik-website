@@ -2,13 +2,11 @@ import Stripe from "stripe";
 import { NextRequest } from "next/server";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_dummy", {
-  apiVersion: "2025-07-30.basil",
+  apiVersion: "2024-12-18.acacia",
 });
 
-export async function POST(_req: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    console.log("Creating Stripe checkout session...");
-    
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/?checkout=success`,
@@ -17,7 +15,7 @@ export async function POST(_req: NextRequest) {
         {
           price_data: {
             currency: "nzd",
-            unit_amount: 15900, // $159.00 NZD
+            unit_amount: 15900,
             product_data: {
               name: "Website Audit (48h)",
               description: "AI-powered website & SEO audit delivered in 48 hours",
@@ -36,6 +34,4 @@ export async function POST(_req: NextRequest) {
       { status: 500 }
     );
   }
-
 }
-
