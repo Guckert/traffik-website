@@ -15,8 +15,8 @@ export async function POST(req: NextRequest) {
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/?checkout=success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/?checkout=cancelled`,
+      success_url: `https://traffik-website-lj5y.vercel.app/?checkout=success`,
+      cancel_url: `https://traffik-website-lj5y.vercel.app/?checkout=cancelled`,
       line_items: [
         {
           price_data: {
@@ -41,3 +41,4 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
