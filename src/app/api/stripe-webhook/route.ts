@@ -14,6 +14,7 @@ export async function POST(req: Request): Promise<Response> {
     return new Response("Missing Stripe signature", { status: 400 });
   }
 
+  // Raw body is required for Stripe signature verification
   const rawBody = await req.text();
 
   try {
@@ -26,10 +27,12 @@ export async function POST(req: Request): Promise<Response> {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
 
-      // Collect custom fields from Checkout
+      // Gather custom fields from Checkout
       const custom: Record<string, string> = {};
       (session.custom_fields ?? []).forEach((f) => {
-        if (f.type === "text" && f.key) custom[f.key] = f.text?.value ?? "";
+        if (f.type === "text" && f.key) {
+          custom[f.key] = f.text?.value ?? "";
+        }
       });
 
       // Send to n8n
@@ -50,7 +53,7 @@ export async function POST(req: Request): Promise<Response> {
 
     return NextResponse.json({ received: true });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Unknown error";
+    const message = err instanceof Error ? err.message : String(err);
     console.error("Webhook error:", message);
     return new Response(`Webhook Error: ${message}`, { status: 400 });
   }
