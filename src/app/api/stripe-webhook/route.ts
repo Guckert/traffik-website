@@ -10,11 +10,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2024-06
 
 export async function POST(req: Request): Promise<Response> {
   const signature = req.headers.get("stripe-signature");
-  if (!signature) {
-    return new Response("Missing Stripe signature", { status: 400 });
-  }
+  if (!signature) return new Response("Missing Stripe signature", { status: 400 });
 
-  // Raw body is required for Stripe signature verification
   const rawBody = await req.text();
 
   try {
@@ -27,15 +24,11 @@ export async function POST(req: Request): Promise<Response> {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
 
-      // Gather custom fields from Checkout
       const custom: Record<string, string> = {};
       (session.custom_fields ?? []).forEach((f) => {
-        if (f.type === "text" && f.key) {
-          custom[f.key] = f.text?.value ?? "";
-        }
+        if (f.type === "text" && f.key) custom[f.key] = f.text?.value ?? "";
       });
 
-      // Send to n8n
       await fetch(process.env.N8N_WEBHOOK_URL!, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
