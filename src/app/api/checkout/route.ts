@@ -12,8 +12,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
 
 type ProductKey = "audit" | "keywords";
 const PRODUCTS: Record<ProductKey, { name: string; amount: number }> = {
-  audit: { name: "Job-Winning Audit", amount: 15900 },        // $159
-  keywords: { name: "Keyword Research Report", amount: 35000 } // $350
+  audit: { name: "Job-Winning Audit", amount: 15900 },         // $159
+  keywords: { name: "Keyword Research Report", amount: 35000 }, // $350
 };
 
 export async function POST(req: Request): Promise<Response> {
