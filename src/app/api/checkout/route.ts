@@ -1,49 +1,48 @@
+// app/api/checkout/route.js
 import Stripe from "stripe";
-import { NextRequest } from "next/server";
 
-export async function POST(req: NextRequest) {
-  try {
-    if (!process.env.STRIPE_SECRET_KEY) {
-      return Response.json({ error: "Configuration error" }, { status: 500 });
-    }
+export async function POST(request) {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-06-20" });
 
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2025-07-30.basil",
-    });
+  const { product } = await request.json();
+  const PRODUCTS = {
+    audit: { name: "Job-Winning Audit", amount: 15900 },
+    keywords: { name: "Keyword Research Report", amount: 35000 },
+  };
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      success_url: `https://traffik-website-lj5y.vercel.app/?checkout=success`,
-      cancel_url: `https://traffik-website-lj5y.vercel.app/?checkout=cancelled`,
-      
-      // Collect the website URL for the audit
-      custom_fields: [
-        {
-          key: "website_url",
-          label: { type: "custom", custom: "Website URL to audit" },
-          type: "text",
-          optional: false,
-        },
-      ],
-      
-      line_items: [
-        {
-          price_data: {
-            currency: "nzd",
-            unit_amount: 15900,
-            product_data: {
-              name: "Website Audit (48h)",
-              description: "AI-powered website & SEO audit delivered in 48 hours",
-            },
-          },
-          quantity: 1,
-        },
-      ],
-    });
-
-    return Response.json({ url: session.url });
-  } catch (error) {
-    console.error('Stripe error:', error);
-    return Response.json({ error: "Error creating checkout session" }, { status: 500 });
+  if (!PRODUCTS[product]) {
+    return new Response(JSON.stringify({ error: "Invalid product" }), { status: 400 });
   }
+
+  const { name, amount } = PRODUCTS[product];
+
+  const session = await stripe.checkout.sessions.create({
+    mode: "payment",
+    line_items: [
+      {
+        price_data: {
+          currency: "nzd",
+          product_data: { name },
+          unit_amount: amount,
+        },
+        quantity: 1,
+      },
+    ],
+    payment_method_types: ["card"],
+    customer_creation: "always",
+    custom_fields: [
+      { key: "first_name", label: { type: "custom", custom: "First name" }, type: "text", text: { maximum_length: 40 } },
+      { key: "last_name",  label: { type: "custom", custom: "Last name"  }, type: "text", text: { maximum_length: 60 } },
+      { key: "keywords",   label: { type: "custom", custom: "3 keywords (comma-separated)" }, type: "text", text: { maximum_length: 120 } },
+      { key: "location",   label: { type: "custom", custom: "Location" }, type: "text", text: { maximum_length: 80 } },
+    ],
+    success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/thank-you?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/#plans`,
+    metadata: { product },
+  });
+
+  return new Response(JSON.stringify({ url: session.url }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
 }
