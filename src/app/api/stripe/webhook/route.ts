@@ -6,7 +6,9 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2024-06-20" });
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+  apiVersion: "2024-06-20",
+});
 
 export async function POST(req: Request): Promise<Response> {
   const signature = req.headers.get("stripe-signature");
@@ -18,7 +20,7 @@ export async function POST(req: Request): Promise<Response> {
     const event = stripe.webhooks.constructEvent(
       rawBody,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      process.env.STRIPE_WEBHOOK_SECRET as string
     );
 
     if (event.type === "checkout.session.completed") {
@@ -29,7 +31,7 @@ export async function POST(req: Request): Promise<Response> {
         if (f.type === "text" && f.key) custom[f.key] = f.text?.value ?? "";
       });
 
-      await fetch(process.env.N8N_WEBHOOK_URL!, {
+      await fetch(process.env.N8N_WEBHOOK_URL as string, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
