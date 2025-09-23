@@ -1,63 +1,42 @@
-import { headers } from "next/headers";
+import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2024-06-20" });
+
 export async function POST(req: Request) {
-  // Check if Stripe key exists
-  if (!process.env.STRIPE_SECRET_KEY) {
-    console.error('STRIPE_SECRET_KEY not found');
-    return new Response('Configuration error', { status: 500 });
-  }
-
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2025-07-30.basil",
-  });
-
-  const body = await req.text();
-  const signature = (await headers()).get("stripe-signature");
-
-  let event: Stripe.Event;
+  const signature = req.headers.get("stripe-signature")!;
+  const body = await req.text(); // raw body required for signature verification
 
   try {
-    if (!process.env.STRIPE_WEBHOOK_SECRET || !signature) {
-      throw new Error('Missing webhook secret or signature');
-    }
+    const event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!);
 
-    event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
-  } catch (error) {
-    console.error('Webhook signature verification failed:', error);
-    return new Response('Webhook Error', { status: 400 });
-  }
+    if (event.type === "checkout.session.completed") {
+      const s = event.data.object as Stripe.Checkout.Session;
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-    
-    const auditData = {
-      customer_email: session.customer_details?.email || "not-provided@example.com",
-      customer_name: session.customer_details?.name || "Customer",
-      amount_paid: session.amount_total,
-      currency: session.currency?.toUpperCase() || "NZD",
-      payment_id: session.id,
-      payment_status: session.payment_status,
-      website_url: "Website URL not provided",
-      product: "Website Audit (48h)",
-      timestamp: new Date().toISOString(),
-    };
+      const custom: Record<string, string> = {};
+      (s.custom_fields || []).forEach((f) => {
+        if (f.type === "text" && f.key) custom[f.key] = f.text?.value || "";
+      });
 
-    try {
-      await fetch("https://tsoldx.app.n8n.cloud/webhook-test/website-audit", {
+      // Push into n8n
+      await fetch(process.env.N8N_WEBHOOK_URL!, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(auditData),
+        body: JSON.stringify({
+          product: s.metadata?.product,
+          amount_total: s.amount_total,
+          currency: s.currency,
+          customer_email: s.customer_details?.email,
+          customer_name: s.customer_details?.name,
+          custom_fields: custom,
+          session_id: s.id,
+        }),
       });
-      console.log("N8N workflow triggered successfully");
-    } catch (error) {
-      console.error("N8N webhook error:", error);
     }
-  }
 
-  return new Response("ok", { status: 200 });
+    return NextResponse.json({ received: true });
+  } catch (err: any) {
+    console.error("Webhook error:", err.message);
+    return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
+  }
 }
