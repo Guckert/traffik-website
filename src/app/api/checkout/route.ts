@@ -1,23 +1,32 @@
-// app/api/checkout/route.js
+// src/app/api/checkout/route.ts
+export const runtime = "nodejs";
+export const preferredRegion = "syd1";
+export const dynamic = "force-dynamic";
+
+import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
-export async function POST(request) {
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-06-20" });
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2024-06-20" });
 
-  const { product } = await request.json();
-  const PRODUCTS = {
-    audit: { name: "Job-Winning Audit", amount: 15900 },
-    keywords: { name: "Keyword Research Report", amount: 35000 },
-  };
+type ProductKey = "audit" | "keywords";
+const PRODUCTS: Record<ProductKey, { name: string; amount: number }> = {
+  audit: { name: "Job-Winning Audit", amount: 15900 },       // $159
+  keywords: { name: "Keyword Research Report", amount: 35000 } // $350
+};
 
-  if (!PRODUCTS[product]) {
-    return new Response(JSON.stringify({ error: "Invalid product" }), { status: 400 });
+export async function POST(req: Request): Promise<Response> {
+  const body = (await req.json()) as { product?: string };
+  const product = body.product as ProductKey | undefined;
+
+  if (!product || !(product in PRODUCTS)) {
+    return NextResponse.json({ error: "Invalid product" }, { status: 400 });
   }
 
   const { name, amount } = PRODUCTS[product];
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
+    payment_method_types: ["card"],
     line_items: [
       {
         price_data: {
@@ -28,21 +37,37 @@ export async function POST(request) {
         quantity: 1,
       },
     ],
-    payment_method_types: ["card"],
     customer_creation: "always",
     custom_fields: [
-      { key: "first_name", label: { type: "custom", custom: "First name" }, type: "text", text: { maximum_length: 40 } },
-      { key: "last_name",  label: { type: "custom", custom: "Last name"  }, type: "text", text: { maximum_length: 60 } },
-      { key: "keywords",   label: { type: "custom", custom: "3 keywords (comma-separated)" }, type: "text", text: { maximum_length: 120 } },
-      { key: "location",   label: { type: "custom", custom: "Location" }, type: "text", text: { maximum_length: 80 } },
+      {
+        key: "first_name",
+        label: { type: "custom", custom: "First name" },
+        type: "text",
+        text: { maximum_length: 40 },
+      },
+      {
+        key: "last_name",
+        label: { type: "custom", custom: "Last name" },
+        type: "text",
+        text: { maximum_length: 60 },
+      },
+      {
+        key: "keywords",
+        label: { type: "custom", custom: "3 keywords (comma-separated)" },
+        type: "text",
+        text: { maximum_length: 120 },
+      },
+      {
+        key: "location",
+        label: { type: "custom", custom: "Location" },
+        type: "text",
+        text: { maximum_length: 80 },
+      },
     ],
     success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/thank-you?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/#plans`,
     metadata: { product },
   });
 
-  return new Response(JSON.stringify({ url: session.url }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
+  return NextResponse.json({ url: session.url }, { status: 200 });
 }
