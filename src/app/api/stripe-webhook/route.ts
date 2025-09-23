@@ -1,42 +1,57 @@
+// src/app/api/stripe-webhook/route.ts
+export const runtime = "nodejs";
+export const preferredRegion = "syd1";
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2024-06-20" });
 
-export async function POST(req: Request) {
-  const signature = req.headers.get("stripe-signature")!;
-  const body = await req.text(); // raw body required for signature verification
+export async function POST(req: Request): Promise<Response> {
+  const signature = req.headers.get("stripe-signature");
+  if (!signature) {
+    return new Response("Missing Stripe signature", { status: 400 });
+  }
+
+  const rawBody = await req.text();
 
   try {
-    const event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!);
+    const event = stripe.webhooks.constructEvent(
+      rawBody,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
 
     if (event.type === "checkout.session.completed") {
-      const s = event.data.object as Stripe.Checkout.Session;
+      const session = event.data.object as Stripe.Checkout.Session;
 
+      // Collect custom fields from Checkout
       const custom: Record<string, string> = {};
-      (s.custom_fields || []).forEach((f) => {
-        if (f.type === "text" && f.key) custom[f.key] = f.text?.value || "";
+      (session.custom_fields ?? []).forEach((f) => {
+        if (f.type === "text" && f.key) custom[f.key] = f.text?.value ?? "";
       });
 
-      // Push into n8n
+      // Send to n8n
       await fetch(process.env.N8N_WEBHOOK_URL!, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          product: s.metadata?.product,
-          amount_total: s.amount_total,
-          currency: s.currency,
-          customer_email: s.customer_details?.email,
-          customer_name: s.customer_details?.name,
+          product: session.metadata?.product,
+          amount_total: session.amount_total,
+          currency: session.currency,
+          customer_email: session.customer_details?.email,
+          customer_name: session.customer_details?.name,
           custom_fields: custom,
-          session_id: s.id,
+          session_id: session.id,
         }),
       });
     }
 
     return NextResponse.json({ received: true });
-  } catch (err: any) {
-    console.error("Webhook error:", err.message);
-    return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("Webhook error:", message);
+    return new Response(`Webhook Error: ${message}`, { status: 400 });
   }
 }
