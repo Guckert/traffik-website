@@ -34,6 +34,12 @@ export async function POST(request: NextRequest) {
       },
       custom_fields: [
         {
+          key: "customer_name",
+          label: { type: "custom", custom: "Full Name" },
+          type: "text",
+          optional: false,
+        },
+        {
           key: "website_url",
           label: { type: "custom", custom: "Website URL" },
           type: "text",
