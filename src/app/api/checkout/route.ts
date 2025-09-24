@@ -15,7 +15,8 @@ export async function POST(request: NextRequest) {
           price_data: {
             currency: "usd",
             product_data: {
-              name: "Website Audit", // Fixed product
+              name: "Website Audit",
+              description: "Complete SEO and performance analysis of your website",
             },
             unit_amount: 15900, // $159 in cents
           },
@@ -25,6 +26,30 @@ export async function POST(request: NextRequest) {
       mode: "payment",
       success_url: `${request.headers.get("origin")}/success`,
       cancel_url: `${request.headers.get("origin")}/cancel`,
+      
+      // 🔥 ADD THESE LINES TO COLLECT CUSTOMER INFO:
+      billing_address_collection: "required",
+      customer_creation: "always",
+      phone_number_collection: {
+        enabled: true,
+      },
+      custom_fields: [
+        {
+          key: "website_url",
+          label: { type: "custom", custom: "Website URL" },
+          type: "text",
+          optional: false,
+        },
+        {
+          key: "business_name",
+          label: { type: "custom", custom: "Business Name" },
+          type: "text",
+          optional: true,
+        }
+      ],
+      metadata: {
+        product_type: "website_audit",
+      }
     });
 
     return NextResponse.json({ url: session.url });
