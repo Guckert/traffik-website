@@ -27,7 +27,6 @@ export async function POST(request: NextRequest) {
       success_url: `${request.headers.get("origin")}/success`,
       cancel_url: `${request.headers.get("origin")}/cancel`,
       
-      // 🔥 ADD THESE LINES TO COLLECT CUSTOMER INFO:
       billing_address_collection: "required",
       customer_creation: "always",
       phone_number_collection: {
@@ -37,6 +36,12 @@ export async function POST(request: NextRequest) {
         {
           key: "website_url",
           label: { type: "custom", custom: "Website URL" },
+          type: "text",
+          optional: false,
+        },
+        {
+          key: "target_keywords",
+          label: { type: "custom", custom: "3 Target Keywords (comma separated)" },
           type: "text",
           optional: false,
         },
