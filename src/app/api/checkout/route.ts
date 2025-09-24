@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
           price_data: {
             currency: "usd",
             product_data: {
-              name: "Website Audit",
+              name: "Website Audit", // Fixed product
             },
             unit_amount: 15900, // $159 in cents
           },
