@@ -1,4 +1,3 @@
-// src/app/api/checkout/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
@@ -50,12 +49,6 @@ export async function POST(request: NextRequest) {
           label: { type: "custom", custom: "3 Target Keywords (comma separated)" },
           type: "text",
           optional: false,
-        },
-        {
-          key: "business_name",
-          label: { type: "custom", custom: "Business Name" },
-          type: "text",
-          optional: true,
         }
       ],
       metadata: {
