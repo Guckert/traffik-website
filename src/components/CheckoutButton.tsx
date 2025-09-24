@@ -1,4 +1,4 @@
-// src/app/api/checkout/route.ts
+src/components/CheckoutButton.tsx
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
@@ -35,3 +35,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
