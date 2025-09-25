@@ -37,7 +37,29 @@ export async function POST(request: NextRequest) {
       phone_number_collection: {
         enabled: true,
       },
-      // Removed custom_fields temporarily to test
+      
+      // All 3 custom fields (Stripe's maximum)
+      custom_fields: [
+        {
+          key: "customer_name",
+          label: { type: "custom", custom: "Full Name" },
+          type: "text",
+          optional: false,
+        },
+        {
+          key: "website_url",
+          label: { type: "custom", custom: "Website URL" },
+          type: "text",
+          optional: false,
+        },
+        {
+          key: "target_keywords",
+          label: { type: "custom", custom: "Target Keywords (comma separated)" },
+          type: "text",
+          optional: false,
+        }
+      ],
+      
       metadata: {
         product_type: "website_audit",
       }
